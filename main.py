@@ -4,7 +4,7 @@ from geo import Geojp
 import requests
 
 # Done this one
-
+# --------- THIS ONE USE FOR CREATE '_lst' AND '_lcc'
 # wb = load_workbook('master_data.xlsx')
 # sheet1 = wb['DOM_SECTION_MST']
 # _lst = {}
@@ -17,6 +17,7 @@ import requests
 
 # Global variable for mapping
 _map = Geojp()
+_lcc = {}
 
 
 def getprice(departure, arrival, day='20160620'):
@@ -49,7 +50,7 @@ def get_total_price(dep1, arr1, mid):
     if f1 and f2:
         return f1 + f2
     else:
-        return 0
+        return None
 
 
 def get_key(lst):
@@ -58,20 +59,70 @@ def get_key(lst):
         for item in lst:
             rs.append(item[1])
     else:
-        for i in range(0, 3):
-            rs.append(lst[i][1])
+        for idn in range(0, 3):
+            rs.append(lst[idn][1])
     return rs
 
 
-def sort_and_filter(start, end, listitem):
+def sort_and_filter(start, end, listitem, lcc={}):
     rs = []
-    for item in listitem:
-        k = get_total_price(dep1=start, arr1=end, mid=item)
-        if k:
-            tmp = [k, item]
-            rs.append(tmp)
-    rs.sort(key=lambda x: x[0])
-    return get_key(rs)
+    frs = []
+    num = len(listitem)
+    if num == 2:
+        if start in lcc and listitem[0] in lcc and (listitem[0] in lcc[start] or end in lcc[listitem[0]]):
+            # if listitem[0] in lcc[start] or end in lcc[listitem[0]]:
+            return listitem
+        elif start in lcc and listitem[1] in lcc and (listitem[1] in lcc[start] or end in lcc[listitem[1]]):
+            # if listitem[1] in lcc[start] or end in lcc[listitem[1]]:
+            return list(reversed(listitem))
+        else:
+            for item in listitem:
+                k = get_total_price(dep1=start, arr1=end, mid=item)
+                if k:
+                    tmp = [k, item]
+                    rs.append(tmp)
+            rs.sort(key=lambda x: x[0])
+            return get_key(rs)
+    else:
+        lcc_lst = []
+        for item in listitem:
+            if start in lcc and item in lcc and (item in lcc[start] or end in lcc[item]):
+                lcc_lst.append(item)
+            else:
+                k = get_total_price(dep1=start, arr1=end, mid=item)
+                if k:
+                    tmp = [k, item]
+                    rs.append(tmp)
+        num_lcc_list = len(lcc_lst)
+        if num_lcc_list >= 3:
+            rs_lcc = []
+            for it in lcc_lst:
+                k = get_total_price(dep1=start, arr1=end, mid=it)
+                if k:
+                    tmp = [k, it]
+                    rs_lcc.append(tmp)
+            rs_lcc.sort(key=lambda x: x[0])
+            return get_key(rs_lcc)
+        elif num_lcc_list == 2:
+            rs_lcc = []
+            for it in lcc_lst:
+                k = get_total_price(dep1=start, arr1=end, mid=it)
+                if k:
+                    tmp = [k, it]
+                    rs_lcc.append(tmp)
+            rs_lcc.sort(key=lambda x: x[0])
+            frs.append(rs_lcc[0][1])
+            frs.append(rs_lcc[1][1])
+            rs.sort(key=lambda x: x[0])
+            frs.append(rs[0][1])
+            return frs
+        else:
+            rs.sort(key=lambda x: x[0])
+            lcc_lst.append(rs[0][1])
+            lcc_lst.append(rs[1][1])
+            if num_lcc_list == 0:
+                lcc_lst.append(rs[2][1])
+            return lcc_lst
 
 
 def get_way(depart, desti, dictaw):
@@ -122,6 +173,7 @@ print '--------------------------------------------------'
 # sheet = nwb.create_sheet(title='RESULT')
 # sheet = wb['DOM_SECTION_MST']
 
+# --------- MAKE ROUTES BY THIS ONE -------------
 # -------------- THIS ONE DONE ------------
 
 # for row in sheet1.iter_rows():
@@ -135,24 +187,52 @@ print '--------------------------------------------------'
 # sheet1['I1'].value = 'RESULT'
 # wb.save('result.xlsx')
 
-# -------------------------------------------
+# -------------- THIS ONE FOR FILTER ---------
 # --------------- Run for 100 row in excel ---------------
-wb = load_workbook('result.xlsx')
+#
+#
+# wb = load_workbook('result.xlsx')
+# sheet = wb['DOM_SECTION_MST']
+# start_row = 1
+# end_row = 2450
+# sheet['J1'] = 'FINAL_RESULT'
+# for index, row in enumerate(sheet.iter_rows()):
+#     if start_row <= index <= end_row:
+#         print 'row', index, 'run ...'
+#         ind = 'J' + str(index + 1)
+#         if row[8].value:
+#             tmp_lst = list(row[8].value.split(','))
+#             if len(tmp_lst) != 1:
+#                 sheet[ind].value = ','.join(sort_and_filter(start=row[1].value, end=row[2].value, listitem=tmp_lst))
+#             else:
+#                 sheet[ind].value = ','.join(tmp_lst)
+#         print 'finish', index
+# wb.save('final_result.xlsx')
+# # --------------------------------------------------------
+
+wb = load_workbook('final_result.xlsx')
 sheet = wb['DOM_SECTION_MST']
 start_row = 1
 end_row = 2450
-sheet['J1'] = 'FINAL_RESULT'
+
+for row in sheet.iter_rows():
+    if row[6].value == 1:
+        if row[1].value in _lcc:
+            _lcc[row[1].value].append(row[2].value)
+        else:
+            _lcc[row[1].value] = [row[2].value]
+for items in _lcc.iteritems():
+    print(items)
 for index, row in enumerate(sheet.iter_rows()):
     if start_row <= index <= end_row:
         print 'row', index, 'run ...'
         ind = 'J' + str(index + 1)
         if row[8].value:
             tmp_lst = list(row[8].value.split(','))
-            if len(tmp_lst) != 1:
-                sheet[ind].value = ','.join(sort_and_filter(start=row[1].value, end=row[2].value, listitem=tmp_lst))
+            if len(tmp_lst) > 1:
+                sheet[ind].value = ','.join(sort_and_filter(start=row[1].value, end=row[2].value, listitem=tmp_lst, lcc=_lcc))
             else:
                 sheet[ind].value = ','.join(tmp_lst)
         print 'finish', index
-wb.save('final_result.xlsx')
-# --------------------------------------------------------
+wb.save('final_result_2.xlsx')
 print 'Successful ! THIS IS SPARTA'
