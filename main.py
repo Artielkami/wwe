@@ -71,13 +71,13 @@ def sort_and_filter(start, end, listitem, lcc={}):
     rs_normal = []
     num = len(listitem)
     if num == 1:
-        if start in lcc and listitem[0] in lcc and (listitem[0] in lcc[start] or end in lcc[listitem[0]]):
+        if (start in lcc and listitem[0] in lcc[start]) or (listitem[0] in lcc and end in lcc[listitem[0]]):
             return ','.join(listitem), None
         else:
             return None, ','.join(listitem)
     else:
         for item in listitem:
-            if start in lcc and item in lcc and (item in lcc[start] or end in lcc[item]):
+            if (start in lcc and item in lcc[start]) or (item in lcc and end in lcc[item]):
                 rs_lcc.append(item)
             else:
                 rs_normal.append(item)
@@ -246,16 +246,16 @@ print '--------------------------------------------------'
 wb = load_workbook('final_result.xlsx')
 sheet = wb['DOM_SECTION_MST']
 start_row = 1
-end_row = 10
+end_row = 2415 # 2415 for full
 
+# ----- WILL REMOVE TO TOP WHEN FINISH FINAL ------
 for row in sheet.iter_rows():
     if row[6].value == 1:
         if row[1].value in _lcc:
             _lcc[row[1].value].append(row[2].value)
         else:
             _lcc[row[1].value] = [row[2].value]
-# for items in _lcc.iteritems():
-#     print(items)
+
 for index, row in enumerate(sheet.iter_rows()):
     if start_row <= index <= end_row:
         print 'row', index, 'run ...'
@@ -265,7 +265,9 @@ for index, row in enumerate(sheet.iter_rows()):
             tmp_lst = list(row[8].value.split(','))
             sheet[inj].value, sheet[ink] = sort_and_filter(start=row[1].value, end=row[2].value, listitem=tmp_lst, lcc=_lcc)
         print 'finish', index
-sheet['K1'] = 'LCC_RESULTS'
-sheet['J1'] = 'NORMAL_RESULTS'
+# sheet['K1'] = 'NORMAL_RESULTS'
+# sheet['J1'] = 'LCC_RESULTS'
+for items in _lcc.iteritems():
+    print(items)
 wb.save('final_result_2.xlsx')
 print 'Successful ! THIS IS SPARTA'
