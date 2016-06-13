@@ -6,8 +6,6 @@ import xlwt
 import time
 import csv as csv
 
-import sys
-
 start_time = time.time()
 
 book = open_workbook('final_result_2.xlsx')
@@ -19,7 +17,6 @@ wb = open_workbook('skyscanner_search_log_201505_201511.xlsx')
 
 print("load workbook time --- %s seconds ---" % (time.time() - start_time))
 
-# f = open("sometest.txt", "w")
 csv_file = open('result_trial.csv', 'wb')
 outputWritter = csv.writer(csv_file, delimiter='\t')
 outputWritter.writerow(['TOTAL SEARCH', 'DEPARTURE', 'ARRIVAL', 'LCC_PORT', 'NONE_LCC_PORT'])
@@ -30,9 +27,6 @@ def find(dep, arr, num):
     for rowidx in range(sheet_xl.nrows):
         r = sheet_xl.row(rowidx)
         if r[1].value == dep and r[2].value == arr:
-            # outputWritter.writerow('time_search:\t' + str(num) + '\t' + dep + '\t' + arr + '\t' +\
-            #     'lcc:\t' + (r[9].value if r[9].value else '') + '\t' +\
-            #     'none_lcc:\t' + (r[10].value if r[10].value else ''))
             lcc = r[9].value.replace(',', '_') if r[9].value else ''
             none_lcc = r[10].value.replace(',', '_') if r[10].value else ''
             outputWritter.writerow([num, dep, arr, lcc, none_lcc])
@@ -76,6 +70,5 @@ for index in range(sheet.nrows):
         print('THAT KHONG THE TIN DUOC')
 
 csv_file.close()
-# f.close()
 print("--- total runtime: %s seconds ---" % (time.time() - start_time))
 print('==========================================')
