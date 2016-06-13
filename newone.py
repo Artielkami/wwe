@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 from openpyxl import load_workbook
 from xlrd import open_workbook
+import xlwt
 import time
 import csv as csv
+
 import sys
 
 start_time = time.time()
@@ -13,7 +15,7 @@ sheet_xl = book.sheet_by_index(0)
 combine_port_dict = {'TYO': ['HND', 'NRT'],
                      'SPK': ['CTS', 'OKD'],
                      'OSA': ['ITM', 'KIX']}
-wb = load_workbook('skyscanner_search_log_201505_201511.xlsx')
+wb = open_workbook('skyscanner_search_log_201505_201511.xlsx')
 
 print("load workbook time --- %s seconds ---" % (time.time() - start_time))
 
@@ -36,7 +38,7 @@ def find(dep, arr, num):
             outputWritter.writerow([num, dep, arr, lcc, none_lcc])
             # f.write(s + '\n')
             break
-    # return 0
+    # TODO this is sparta
 
 
 def make_result(value_keyword, num):
@@ -59,15 +61,16 @@ def make_result(value_keyword, num):
         find(routes[0], routes[1], num)
 
 
-sheet = wb['6months']
+sheet = wb.sheet_by_name('6months')
 start_row = 1
-end_row = 1668
+end_row = 150
 none_break = True
-for index, row in enumerate(sheet.iter_rows()):
+for index in range(sheet.nrows):
     print 'runing row --- ', index
     if index > end_row:
         break
     elif start_row <= index <= end_row:
+        row = sheet.row(index)
         make_result(row[0].value, row[1].value)
     else:
         print('THAT KHONG THE TIN DUOC')
