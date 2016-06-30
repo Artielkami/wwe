@@ -8,20 +8,38 @@ import requests
 
 class Main(object):
 
-    _map = Geojp()
-    _lcc = {}
-    _lst = {}
+    def __init__(self):
+        self._map = Geojp()
+        self._lcc = {}
+        self._lst = {}
+
+    def forfun(self):
+        print 'ggwp'
 
     def make_lst(self):
         # --------- THIS ONE USE FOR CREATE '_lst' AND '_lcc'
-        wb = load_workbook('master_data.xlsx')
-        sheet1 = wb['DOM_SECTION_MST']
-        for row in sheet1.iter_rows():
+        # wb = load_workbook('master_data.xlsx')
+        # sheet1 = wb['DOM_SECTION_MST']
+        # for row in sheet1.iter_rows():
+        #     if row[5].value == 1:
+        #         if row[1].value in self._lst:
+        #             self._lst[row[1].value].append(row[2].value)
+        #         else:
+        #             self._lst[row[1].value] = [row[2].value]
+        wb = open_workbook('master_data.xlsx')
+        sheet = wb.sheet_by_name('DOM_SECTION_MST')
+        for index in range(sheet.nrows):
+            row = sheet.row(index)
             if row[5].value == 1:
                 if row[1].value in self._lst:
                     self._lst[row[1].value].append(row[2].value)
                 else:
                     self._lst[row[1].value] = [row[2].value]
+            if row[6].value == 1:
+                if row[1].value in self._lcc:
+                    self._lcc[row[1].value].append(row[2].value)
+                else:
+                    self._lcc[row[1].value] = [row[2].value]
 
     @staticmethod
     def getprice(departure, arrival, day='20160620'):
@@ -131,7 +149,10 @@ class Main(object):
 
     def get_price_lcc(self, dep, arr):
         # TODO
-        return None
+        ddd = dep
+        aaa = arr
+        a = [ddd+aaa]
+        return a
 
     def sort_list_lcc(self, str_lst_lcc):
         lst_lcc = list(str_lst_lcc.split(','))
@@ -141,8 +162,9 @@ class Main(object):
         else:
             tmp = []
             for item in lst_lcc:
-                tmp.append([self.get_price_lcc(item), item])
-            tmp.sort(key=lambda x:x[0])
+                value = self.get_price_lcc(item)
+                tmp.append([value, item])
+            tmp.sort(key=lambda x: x[0])
             return ','.join(self.get_key(tmp, k))
 
     def sort_lcc(self):
@@ -157,7 +179,7 @@ class Main(object):
 
         start_row = 1
         end_row = 150
-        none_break = True
+        # none_break = True
         for index in range(sheet.nrows):
             print 'runing row --- ', index
             if index > end_row:
@@ -167,11 +189,33 @@ class Main(object):
                 if row[9].value:
                     outputwritter.writerow([row[1].value, row[2].value, self.sort_list_lcc(row[9].value)])
             else:
-                print '------- start '
+                print '------- start --------'
 
-
-
-
+    def creattion_of_god(self, fname):
+        wb = load_workbook('master_data.xlsx')
+        sheet = wb['DOM_SECTION_MST']
+        start_row = 1
+        end_row = 2450
+        sheet['I1'].value = 'RESULT'
+        sheet['J1'] = 'LCC_RESULT'
+        sheet['K1'].value = 'NORMAL_RESULT'
+        for index, row in enumerate(sheet.iter_rows()):
+            if start_row <= index <= end_row:
+                print 'row', index, 'is runing ...'
+                ini = 'I' + str(index + 1)
+                inj = 'J' + str(index + 1)
+                ink = 'K' + str(index + 1)
+                if row[4].value:
+                    k = self.get_way(depart=row[1].value, desti=row[2].value, dictaw=self._lst)
+                    sheet[ini].value = ','.join(k)
+                    if k:
+                        sheet[inj].value, sheet[ink] = self.sort_and_filter(start=row[1].value,
+                                                                            end=row[2].value,
+                                                                            listitem=k,
+                                                                            lcc=self._lcc)
+                print '--- finish ', index
+        wb.save(fname)
+        print '----- COMPLETED, RUNNING SUCCESSFUL -----'
 
     def run(self):
 
@@ -224,12 +268,14 @@ class Main(object):
         #         if row[8].value:
         #             tmp_lst = list(row[8].value.split(','))
         #             if len(tmp_lst) != 1:
-        #                 sheet[ind].value = ','.join(sort_and_filter(start=row[1].value, end=row[2].value, listitem=tmp_lst))
+        #                 sheet[ind].value = ','.join(sort_and_filter(start=row[1].value,
+        #                                                             end=row[2].value,
+        #                                                             listitem=tmp_lst))
         #             else:
         #                 sheet[ind].value = ','.join(tmp_lst)
         #         print 'finish', index
         # wb.save('final_result.xlsx')
-        # # --------------------------------------------------------
+        # --------------------------------------------------------
 
         wb = load_workbook('final_result.xlsx')
         sheet = wb['DOM_SECTION_MST']
